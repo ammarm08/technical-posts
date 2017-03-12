@@ -26,7 +26,7 @@ of execution, and how these are represented and instantiated in memory by the ke
 Hiding in the footnotes:
 
 > When we discuss the implementation of procedures on register machines, we will see that any iterative process can be realized "in hardware"
-> as a machine taht has a fixed set of registers and no auxiliary memory. In contrast, realizing a recursive process requires a machine that
+> as a machine that has a fixed set of registers and no auxiliary memory. In contrast, realizing a recursive process requires a machine that
 > uses an auxiliary data structure known as a *stack*.
 
 When you've written enough Javascript and read enough trendy Functional Programming Lite blog posts, you run into the term "TCO" -- tail-call optimization.
@@ -63,7 +63,7 @@ also somehow maintain state about this growing stack of calls. Why? Because when
 to the "deferred operation" (`multiplying b * expR(b, n -1)`). This gets computationally expensive.
 
 In the latter case, all state transformations are represented in the parameters of each recursive call. As each function call goes along,
-it carries with it all state transformations. The product is calculated immediately as opposed to deferred.
+it carries with it all state transformations. The product is calculated immediately as opposed to being deferred.
 
 An interpreter that handles tail-recursive procedures, then, will notice the "tail" position of the recursive procedure, identify the
 pattern of state transformation it makes from one call to the next, and then perhaps represent it in assembly code as a tight, efficient
@@ -96,15 +96,13 @@ being applied to a pattern of other procedures.
 A cool example:
 
 ```js
-const iter = (a, b, map, reduce) => {
-  if (a >= b) return map(a)
-  else return reduce(map(a), iter(++a, b, map, reduce))
+const iter = (a, b, transform, reduce) => {
+  if (a >= b) return transform(a)
+  else return reduce(transform(a), iter(++a, b, map, reduce))
 }
 ```
 
-The above function is an iterator from some integer `a` to `b`. On each iteration, it applies a mapping function of the programmer's choice
-to the current integer (let's say `i`), then applies a programmer-supplied reduce function to this transformed `i`, moving along until
-we reach the end of the range of integers.
+The above function is an iterator from some integer `a` to `b`. On each iteration, it applies a transform function of the programmer's choice to the current integer (let's say `i`), then applies a programmer-supplied reduce function to this transformed `i`, moving along until we reach the end of the range of integers.
 
 It can be used to define some `factorial` process:
 
