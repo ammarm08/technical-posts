@@ -98,7 +98,7 @@ A cool example:
 ```js
 const iter = (a, b, transform, reduce) => {
   if (a >= b) return transform(a)
-  else return reduce(transform(a), iter(++a, b, map, reduce))
+  else return reduce(transform(a), iter(++a, b, transform, reduce))
 }
 ```
 
