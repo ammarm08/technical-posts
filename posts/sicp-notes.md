@@ -135,26 +135,25 @@ While explaining an algorithm to find the root of a continuous function (aka `x 
 > Since the interval of uncertainty is reduced by half at each step of the process, the number of steps required grows as
 > O(log(*L*/*T*)), where *L* is the length of the original interval and where *T* is the error tolerance.
 
-Then, while explaining an algorith to find the global maximum of a unimodal function (single-peak):
+Then, while explaining an algorithm to find the global maximum of a unimodal function (single-peak):
 
 > [...] we compare the function value at two intermediate points *x* and *y* in order to reduce the interval.
-> Thus, each reducion step requires that we find the value of the function at two intermediate points.
+> Thus, each reduction step requires that we find the value of the function at two intermediate points.
 
 Nevermind the specifics of these algorithms (they're both variations on a binary search). What I noticed was viewing search
-as a minimizing an interval to within a particular error tolerance. (Abelson/Sussman betray their AI background with this language).
+as minimizing an interval to within a particular error tolerance. (Abelson/Sussman betray their AI background with this language).
 
-In a sorted list of integers where the error tolerance is zero, your initial
+In a sorted list of unique integers where the error tolerance is zero, your initial
 interval lies between the first element and the last. A naive search of this type of list would look like:
 
 ```js
 const list = [1, 2, 3, 4, 5]
-const search = (x, xs, error_tolerance) => {
-  let a = 0,
-      b = xs.length-1
+const search = (x, xs, tolerance) => {
+  let a = 0, b = xs.length-1
   
-  while (b - a >= error_tolerance) {
-    if (xs[a++] === x) return true
-    if (xs[b--] === x) return true
+  while (a <= b) {
+    if (Math.abs(xs[a++] - x) <= tolerance) return true
+    if (Math.abs(xs[b--] - x) <= tolerance) return true
   }
   
   return false
@@ -163,21 +162,18 @@ const search = (x, xs, error_tolerance) => {
 
 Of course this is a pretty shitty search algorithm -- I'd be better off just starting from the beginning and iterating until I find what I'm looking for.
 
-But program-wise, if my input set of values has a predictable shape (aka sorted in some way), then I'm ultimately seeking a more and more efficient way to minimize my interval on each iteration. Hence binary search, which halves the interval (search space) on each iteration:
+Still, this algorithm works. But we can more efficiently reduce the interval via a binary search. This evolution requires a third pointer `middle` that incrementally cleaves the interval (search space) in half. 
 
 ```js
 const list = [1, 2, 3, 4, 5]
-const binarySearch = (x, xs, error_tolerance) => {
-  let a = 0,
-      b = xs.length-1, 
-      middle
+const binarySearch = (x, xs, tolerance) => {
+  let a = 0, b = xs.length-1, middle
   
-  while (b - a >= 0) {
+  while (a <= b) {
     middle = Math.floor((a + b)/2)
+    if (Math.abs(xs[middle] - x) <= tolerance) return true
     
-    if (xs[middle] === x) return true
-    
-    if (xs[middle] > xs[a]) {
+    if (x > xs[middle]) {
       a = middle + 1
     } else {
       b = middle - 1
@@ -188,11 +184,16 @@ const binarySearch = (x, xs, error_tolerance) => {
 }
 ```
 
-A search can often be re-characterized as minimizing the interval of uncertainty up to a particular error tolerance. You improve the search by identifying a better interval to minimize, then minimizing that interval at an increasing rate. Then depending on the type of data and requirements of your search, you think about what room for error you can allow.
+A search can often be re-characterized as minimizing the interval of uncertainty. You improve the search by identifying a better interval to minimize, then minimizing that interval more and more efficiently. Then depending on the type of data and requirements of your search, you think about what room for error you can allow.
 
 Philosophically, I'm tickled -- to search for something well:
+
 1. Understand what you're searching for.
+
 2. Understand where you're searching.
+
 3. Identify the interval to minimize.
+
 4. Determine your error tolerance.
+
 
