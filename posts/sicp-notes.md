@@ -7,7 +7,7 @@ the first time around I find myself reading and re-reading and pondering over.
 
 In this post, I'll be listing (and trying to keep up to date), some "aha!" moments. All mistakes are mine, please call them out when you see them :)
 
-###On the Magic of Processes:
+### On the Magic of Processes:
 
 > Computational processes are abstract beings that inhabit computers. As they evolve, processes manipulate other abstract things called *data*.
 > The evolution of a process is directed by a pattern of rules called a *program*. People create programs to direct processes.
@@ -16,7 +16,7 @@ In this post, I'll be listing (and trying to keep up to date), some "aha!" momen
 This passage gets less esoteric after studying computer architecture and operating systems (re: processes, threads
 of execution, and how these are represented and instantiated in memory by the kernel).
 
-###Tail-Recursive & Registers:
+### Tail-Recursive & Registers:
 
 > (A process) characterized by a chain of deferred operations is called a *recursive* process. Carrying out this process requires that the 
 > interpreter keep track of the (computations) to be performed later on.
@@ -80,7 +80,7 @@ const expIter = (b, n) => {
 }
 ```
 
-###Function Composition
+### Function Composition
 
 > Often the same programming pattern will be used with a number of different procedures. To express such patterns as concepts, we will need
 > to construct procedures that can accept procedures as arguments or return procedures as values. Procedures that manipulate procedures
@@ -128,7 +128,7 @@ const fact = x => {
 }
 ```
 
-###Search as an Interval Minimizing Function
+### Search as an Interval Minimizing Function
 
 While explaining an algorithm to find the root of a continuous function (aka `x where f(x) = 0`):
 
