@@ -196,4 +196,49 @@ Philosophically, I'm tickled -- to search for something well:
 
 4. Determine your error tolerance.
 
+### Data Objects and Message Dispatching
 
+> We see that the ability to manipulate procedures as objects automatically provides the ability to represent compound data.
+> This may seem a curiosity now, but procedural representations of data will play a central role in our programming repertoire.
+
+Data abstractions become extremely useful constructs when we're managing the access, shape, and flow of information we're dealing with. What if we wanted to implement a `Fraction` data type as a numerator-denominator pair? We could define the following procedure:
+
+```js
+const fraction = (numerator, denominator) => (dispatch) => dispatch(numerator, denominator)
+```
+
+This procedure takes a numerator and denominator, then returns a function. This returning function takes as an argument a dispatcher function (that a programmer can define) that will apply the numerator and denominator as its arguments.
+
+How is this useful? Now we have a procedure that has abstracted out the concept of a fraction. The numerator and denominator are simply variables bound by the `fraction` procedure. If we want to access the numerator, we could define a procedure such as:
+
+```js
+const getNumerator = (fraction) => fraction((n, d) => n)
+```
+
+The Fraction data type return a procedure that accepts a dispatcher which has access to the numerator and denominator as arguments. In `getNumerator`, the dispatcher simply returns the numerator (first arg).
+
+Similarly, we can define a denominator dispatcher:
+
+```js
+const getDenominator = (fraction) => fraction((n, d) => d)
+```
+
+And now we could add more specific operations to further manipulate the Fraction data type.
+
+```js
+const addFractions = (a, b) => {
+  const num_a = getNumerator(a), denom_a = getDenominator(a)
+  const num_b = getNumerator(b), denom_b = getDenominator(b)
+  
+  const numerator = ( (num_a * denom_b) + (num_b * denom_a) )
+  const denominator = ( denom_a * denom_b )
+  
+  return fraction(numerator, denominator)
+}
+
+const printFraction = (fraction) => console.log(getNumerator(fraction) + '/' + getDenominator(fraction))
+```
+
+It gets more interesting when you think about representing a fraction in its most reduced form. Say we invoke `fraction(6, 8)`. More precisely, this fraction is `3 / 4`, but do we make that computation at construction time or at access time? That's up to the programmer to decide, depending on read/write requirements. If you anticipate writing fractions more often than accessing them, then maybe reducing upfront is unnecessary. But if you're reading fractions a lot, you don't want to slow things down to constantly reduce the fraction on access, so in this case you may consider reducing the fraction at construction time.
+
+As Abelman/Sussman say, all of this "further blurs the distinction between 'procedure' and 'data'."
