@@ -89,7 +89,7 @@ const expIter = (b, n) => {
     product *= b
   }
   
-  return counter
+  return product
 }
 ```
 
@@ -99,8 +99,8 @@ const expIter = (b, n) => {
 > to construct procedures that can accept procedures as arguments or return procedures as values. Procedures that manipulate procedures
 > are called *higher-order procedures*.
 
-This passage drills in (at least to me) the notion that code is just data. Whether we're dealing with a function or a list or an integer
-or some other primitive, it doesn't matter. We're ultimately performing a series of instructions that manipulate the registers and auxiliary memory structures
+Whether we're dealing with a function or a list or an integer
+or some other primitive, we're ultimately performing a series of instructions that manipulate the registers and auxiliary memory structures
 located in the hardware of our computers.
 
 The implication of this is that, if our logic is tight, we can then start viewing our higher-level abstractions as procedures
@@ -128,19 +128,6 @@ const factorial = x => {
 ```
 Iterate from 1 to `x`, multiplying by `identity(i)` as you go. `factorial(4) -> identity(1) * identity(2) * identity(3) * identity(4)`
 
-And an interpreter that handles tail-call optimization would optimize this code path to look something like this:
-
-```js
-const fact = x => {
-  let total = 1
-  for (let i = 1; i <= x; i++) {
-    total *= i
-  }
-  
-  return total
-}
-```
-
 ### <a name="search">Search as an Interval Minimizing Function</a>
 
 While explaining an algorithm to find the root of a continuous function (aka `x where f(x) = 0`):
@@ -153,15 +140,15 @@ Then, while explaining an algorithm to find the global maximum of a unimodal fun
 > [...] we compare the function value at two intermediate points *x* and *y* in order to reduce the interval.
 > Thus, each reduction step requires that we find the value of the function at two intermediate points.
 
-Nevermind the specifics of these algorithms (they're both variations on a binary search). What I noticed was viewing search
-as minimizing an interval to within a particular error tolerance. (Abelson/Sussman betray their AI background with this language).
+Nevermind the specifics of these algorithms. What I noticed was viewing search
+as minimizing an interval to within a particular error tolerance.
 
-In a sorted list of unique integers where the error tolerance is zero, your initial
+In a sorted list of unique integers where the error tolerance is 0, your initial
 interval lies between the first element and the last. A naive search of this type of list would look like:
 
 ```js
 const list = [1, 2, 3, 4, 5]
-const search = (x, xs, tolerance) => {
+const search = (x, xs, tolerance=0) => {
   let a = 0, b = xs.length-1
   
   while (a <= b) {
@@ -179,7 +166,7 @@ Still, this algorithm works. But we can more efficiently reduce the interval via
 
 ```js
 const list = [1, 2, 3, 4, 5]
-const binarySearch = (x, xs, tolerance) => {
+const binarySearch = (x, xs, tolerance=0) => {
   let a = 0, b = xs.length-1, middle
   
   while (a <= b) {
@@ -199,22 +186,12 @@ const binarySearch = (x, xs, tolerance) => {
 
 A search can often be re-characterized as minimizing the interval of uncertainty. You improve the search by identifying a better interval to minimize, then minimizing that interval more and more efficiently. Then depending on the type of data and requirements of your search, you think about what room for error you can allow.
 
-Philosophically, I'm tickled -- to search for something well:
-
-1. Understand what you're searching for.
-
-2. Understand where you're searching.
-
-3. Identify the interval to minimize.
-
-4. Determine your error tolerance.
-
 ### <a name="data-objects">Data Objects and Message Dispatching</a>
 
 > We see that the ability to manipulate procedures as objects automatically provides the ability to represent compound data.
 > This may seem a curiosity now, but procedural representations of data will play a central role in our programming repertoire.
 
-Data abstractions become extremely useful constructs when we're managing the access, shape, and flow of information we're dealing with. What if we wanted to implement a `Fraction` data type as a numerator-denominator pair? We could define the following procedure:
+Data abstractions become extremely useful constructs when we're managing the flow and access patterns of information we're dealing with. What if we wanted to implement a `Fraction` data type as a numerator-denominator pair? We could define the following procedure:
 
 ```js
 const fraction = (numerator, denominator) => (dispatch) => dispatch(numerator, denominator)
@@ -226,14 +203,20 @@ How is this useful? Now we have a procedure that has abstracted out the concept 
 
 ```js
 const getNumerator = (z) => z((n, d) => n)
+
+// const f = fraction(3, 4)
+// getNumerator(f) = 3
 ```
 
-The Fraction data type return a procedure that accepts a dispatcher which has access to the numerator and denominator as arguments. In `getNumerator`, the dispatcher simply returns the numerator (first arg).
+The Fraction data type return a function that accepts a dispatcher which has access to the numerator and denominator as arguments. In `getNumerator`, the dispatcher simply returns the numerator (first arg).
 
 Similarly, we can define a denominator dispatcher:
 
 ```js
 const getDenominator = (z) => z((n, d) => d)
+
+// const f = fraction(3, 4)
+// getDenominator(f) = 4
 ```
 
 And now we could add more specific operations to further manipulate the Fraction data type.
@@ -305,7 +288,7 @@ const doubles = map(xs, (x) => x * 2) // doubles: cons(2, cons(4, ... you get th
 const sum = reduce(xs, (total, x) => total + x, 0) // sum: 1 + 2 + 3 + 4 + 5 = 15
 ```
 
-This is thinking in "binary" hierarchies (a collection is a pair formed by one thing and a collection of other pairs of one thing and a collection of ... etc).
+This is thinking in "binary" hierarchies (a collection is a pair formed by one thing and a collection of another pair formed by one thing and a collection of another pair formed by ... etc).
 
 Pros: this is a powerful problem-solving mindset: it reduces a problem to a set of subproblems. You can literally "feel the bits sliding in between your fingers."
 
