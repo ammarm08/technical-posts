@@ -212,7 +212,7 @@ This procedure takes a numerator and denominator, then returns a function. This 
 How is this useful? Now we have a procedure that has abstracted out the concept of a fraction. The numerator and denominator are simply variables bound by the `fraction` procedure. If we want to access the numerator, we could define a procedure such as:
 
 ```js
-const getNumerator = (fraction) => fraction((n, d) => n)
+const getNumerator = (z) => z((n, d) => n)
 ```
 
 The Fraction data type return a procedure that accepts a dispatcher which has access to the numerator and denominator as arguments. In `getNumerator`, the dispatcher simply returns the numerator (first arg).
@@ -220,7 +220,7 @@ The Fraction data type return a procedure that accepts a dispatcher which has ac
 Similarly, we can define a denominator dispatcher:
 
 ```js
-const getDenominator = (fraction) => fraction((n, d) => d)
+const getDenominator = (z) => z((n, d) => d)
 ```
 
 And now we could add more specific operations to further manipulate the Fraction data type.
@@ -242,3 +242,57 @@ const printFraction = (fraction) => console.log(getNumerator(fraction) + '/' + g
 It gets more interesting when you think about representing a fraction in its most reduced form. Say we invoke `fraction(6, 8)`. More precisely, this fraction is `3 / 4`, but do we make that computation at construction time or at access time? That's up to the programmer to decide, depending on read/write requirements. If you anticipate writing fractions more often than accessing them, then maybe reducing upfront is unnecessary. But if you're reading fractions a lot, you don't want to slow things down to constantly reduce the fraction on access, so in this case you may consider reducing the fraction at construction time.
 
 As Abelman/Sussman say, all of this "further blurs the distinction between 'procedure' and 'data'."
+
+### Hierarchical Data
+
+Paul Graham has often written something to the effect that all you really need is Lisp and C. C provides lower-level access to the operating system; Lisp provides an abstraction-building construct. C is a light wrapper around assembly/machine code; Lisp makes you question where data ends and a language begins.
+
+Fundamentally, working with Lisp reorders your thinking to work in binaries/pairs. Some extremely powerful procedures can be cooked up from the ground up.
+
+```js
+
+// construct a pair
+const cons = (x, y) => (dispatch) => dispatch(x, y)
+
+// access first/last item in pair
+const car = (z) => z((x, y) => x)
+const cdr = (z) => z((x, y) => y)
+
+// examples:
+let x = cons(1, 2)
+car(x) // 1
+cdr(y) // 2
+
+let y = cons(x, cons(3, 4))
+car(y) // cons(1, 2)
+cdr(y) // cons(3, 4)
+cdr(car(y)) // 2
+cdr(cdr(y)) // 4
+
+// the List primitive constructs a pair of pair of pairs ... of arbitrary length
+const some_list = cons(1, cons(2, cons(3, null))) = list(1, 2, 3)
+
+// append/concatenate two lists
+const append = (a, b) => null?(a) : b ? cons(car(a), append(cdr(a), b))
+
+// list operations
+const nth = (list, n) => null?(list) ? null : (n == 0 ? car(list) : nth(cdr(list), n - 1))
+const len = (list) => null?(list) ? 0 : 1 + len(cdr(list))
+const includes = (list, x) => null?(list) ? false : (car(list) == x ? true : includes(cdr(list), x))
+
+// functional operations (yee haw)
+const map = (list, fn) => null?(list) ? null : cons(fn(car(list)), map(cdr(list), fn))
+const filter = (list, fn) => null?(list) ? null : (fn(car(list)) ? cons(car(list), filter(cdr(list), fn)) : filter(cdr(list), fn))
+const reduce = (list, fn, memo) => null?(list) ? memo : reduce(cdr(list), fn, fn(memo, car(list)))
+
+// examples
+const xs = list(1, 2, 3, 4, 5)
+const odds = filter(xs, (x) => x % 2 != 0) // odds: cons(1, cons(3, cons(5, nil))) = list(1, 3, 5)
+const doubles = map(xs, (x) => x * 2) // doubles: cons(2, cons(4, ... you get the idea
+const sum = reduce(xs, (total, x) => total + x, 0) // sum: 1 + 2 + 3 + 4 + 5 = 15
+```
+
+This is thinking in "binary" hierarchies (a collection is a pair formed by one thing and a collection of other pairs of one thing and a collection of ... etc). Pros: this is a powerful problem-solving mindset: it reduces a problem to a set of subproblems. Cons: "LISP programmers know the value of everything and the cost of nothing" - Alan Perlis. Recursive procedures, as we've learned, aren't always the fastest or memory-efficient. But i) many compilers can recognize and optimize tail-recursive procedures, and ii) many recursive procedures can be rewritten more imperatively. 
+
+Maybe I'm biased, but LISP is a forcing function for clarity when solving something.
+
