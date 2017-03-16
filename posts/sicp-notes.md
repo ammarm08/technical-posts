@@ -27,7 +27,7 @@ In this post, I'll be listing (and trying to keep up to date), some "aha!" momen
 > In effect, we conjure the spirits of the computer with our spells.
 
 This passage gets less esoteric after studying computer architecture and operating systems (re: processes, threads
-of execution, and how these are represented and instantiated in memory by the kernel).
+of execution, and how these are represented and instantiated in memory by the kernel). Where to start: [Nand2Tetris](http://www.nand2tetris.org/) (write your own logic gates, ALUs, memory units, assembler, compiler, and virtual machine); [Operating Systems: Three Easy Pieces](http://pages.cs.wisc.edu/~remzi/OSTEP/) (exercise-driven discussion on how operating systems work)
 
 ### <a name="recursion">Tail-Recursive & Registers</a>:
 
