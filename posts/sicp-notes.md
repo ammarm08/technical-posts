@@ -7,7 +7,20 @@ the first time around I find myself reading and re-reading and pondering over.
 
 In this post, I'll be listing (and trying to keep up to date), some "aha!" moments. All mistakes are mine, please call them out when you see them :)
 
-### On the Magic of Processes:
+### Chapter 1:
+- [Processes, Programs, and Data](#processes)
+- [Tail-Recursive Procedures and Registers](#recursion)
+- [Higher-Order Procedures and Composition](#composition)
+- [Search as an Interval Minimizing Function](#search)
+### Chapter 2:
+- [Data Objects and Message Passing](#data-objects)
+- [Hierarchical Data Structures](#hierarchical-data)
+### Chapter 3:
+### Chapter 4:
+### Chapter 5:
+
+
+### <a name="processes">On the Magic of Processes</a>:
 
 > Computational processes are abstract beings that inhabit computers. As they evolve, processes manipulate other abstract things called *data*.
 > The evolution of a process is directed by a pattern of rules called a *program*. People create programs to direct processes.
@@ -16,7 +29,7 @@ In this post, I'll be listing (and trying to keep up to date), some "aha!" momen
 This passage gets less esoteric after studying computer architecture and operating systems (re: processes, threads
 of execution, and how these are represented and instantiated in memory by the kernel).
 
-### Tail-Recursive & Registers:
+### <a name="recursion">Tail-Recursive & Registers</a>:
 
 > (A process) characterized by a chain of deferred operations is called a *recursive* process. Carrying out this process requires that the 
 > interpreter keep track of the (computations) to be performed later on.
@@ -80,7 +93,7 @@ const expIter = (b, n) => {
 }
 ```
 
-### Function Composition
+### <a name="composition">Function Composition</a>
 
 > Often the same programming pattern will be used with a number of different procedures. To express such patterns as concepts, we will need
 > to construct procedures that can accept procedures as arguments or return procedures as values. Procedures that manipulate procedures
@@ -128,7 +141,7 @@ const fact = x => {
 }
 ```
 
-### Search as an Interval Minimizing Function
+### <a name="search">Search as an Interval Minimizing Function</a>
 
 While explaining an algorithm to find the root of a continuous function (aka `x where f(x) = 0`):
 
@@ -196,7 +209,7 @@ Philosophically, I'm tickled -- to search for something well:
 
 4. Determine your error tolerance.
 
-### Data Objects and Message Dispatching
+### <a name="data-objects">Data Objects and Message Dispatching</a>
 
 > We see that the ability to manipulate procedures as objects automatically provides the ability to represent compound data.
 > This may seem a curiosity now, but procedural representations of data will play a central role in our programming repertoire.
@@ -243,7 +256,7 @@ It gets more interesting when you think about representing a fraction in its mos
 
 As Abelman/Sussman say, all of this "further blurs the distinction between 'procedure' and 'data'."
 
-### Hierarchical Data
+### <a name="hierarchical-data">Hierarchical Data Structures</a>
 
 Paul Graham has often written something to the effect that all you really need is Lisp and C. C provides lower-level access to the operating system; Lisp provides an abstraction-building construct. C is a light wrapper around assembly/machine code; Lisp makes you question where data ends and a language begins.
 
@@ -292,7 +305,9 @@ const doubles = map(xs, (x) => x * 2) // doubles: cons(2, cons(4, ... you get th
 const sum = reduce(xs, (total, x) => total + x, 0) // sum: 1 + 2 + 3 + 4 + 5 = 15
 ```
 
-This is thinking in "binary" hierarchies (a collection is a pair formed by one thing and a collection of other pairs of one thing and a collection of ... etc). Pros: this is a powerful problem-solving mindset: it reduces a problem to a set of subproblems. Cons: "LISP programmers know the value of everything and the cost of nothing" - Alan Perlis. Recursive procedures, as we've learned, aren't always the fastest or memory-efficient. But i) many compilers can recognize and optimize tail-recursive procedures, and ii) many recursive procedures can be rewritten more imperatively. 
+This is thinking in "binary" hierarchies (a collection is a pair formed by one thing and a collection of other pairs of one thing and a collection of ... etc).
 
-Maybe I'm biased, but LISP is a forcing function for clarity when solving something.
+Pros: this is a powerful problem-solving mindset: it reduces a problem to a set of subproblems. You can literally "feel the bits sliding in between your fingers."
+
+Cons: "LISP programmers know the value of everything and the cost of nothing" - Alan Perlis. Recursive procedures, as we've learned, aren't always the fastest or memory-efficient.
 
