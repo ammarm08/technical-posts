@@ -15,6 +15,7 @@ In this post, I'll be listing (and trying to keep up to date), some "aha!" momen
 ### Chapter 2:
 - [Data Objects and Message Passing](#data-objects)
 - [Hierarchical Data Structures](#hierarchical-data)
+- [Symbolic Representation](#symbolic)
 ### Chapter 3:
 ### Chapter 4:
 ### Chapter 5:
@@ -293,4 +294,43 @@ This is thinking in "binary" hierarchies (a collection is a pair formed by one t
 Pros: this is a powerful problem-solving mindset: it reduces a problem to a set of subproblems. You can literally "feel the bits sliding in between your fingers."
 
 Cons: "LISP programmers know the value of everything and the cost of nothing" - Alan Perlis. Recursive procedures, as we've learned, aren't always the fastest or memory-efficient.
+
+### <a name="symbolic">Symbolic Representation</a>
+
+> Symbolic differentiation is of special historical significance in Lisp. It was one of the motivating examples behind the
+> development of a computer language for symbol manipulation. Furthermore, it marked the beginning of the line of research that
+> led to the development of powerful systems for symbolic mathematical work.
+
+The early history of computing owes a lot to logicians and mathematicians, especially in the realm of calculus. As my understanding of it goes, calculus preoccupies itself with the study of continuous change -- how a quantity moves from one discrete value to the next; conversely, how systems of motion can be described in terms of the rate of change between discrete values of infinitesimally small distance away from each other. Derivatives and integrals.
+
+Anyways, while the axioms and theorems and formalisms were well developed, computation provided a pretty enticing promise -- that we could use it to approximate differentials with increasing precision. To be able to do this though, we'd need a way to represent data abstractly without immediately binding values to symbols until we absolutely needed to.
+
+In other words, how do can we work with and evaluate expressions like this abstractly (aka without actual values attached to the variables?):
+
+```
+f(x) = x^2 when x = (a + b)^3
+```
+
+In Lisp, this becomes possible with the use of the primitive `quote`:
+
+```lisp 
+(car (quote (list (1 2 3)))) ; 1
+(cdr (quote (list (1 2 3)))) ; (2 3)
+(car '(list (1 2 3))) ; 1
+(cdr '(list (1 2 3))) ; (2 3)
+```
+
+`quote` provides an abstract layer for representing data without needing to evaluate the underlying data. These become *symbols*, hence *symbolic representation*. You could, for example, define a series of functions that create and destructure symbolic representations of sums:
+
+```lisp
+(define (make-sum a b) (list '(+ a b))) ; (+ a b) now a symbol
+(define (sum? s) (if (not (atom? s)) (eq? (car s) '+) nil)) ; check if first element is a '+' symbol
+(define (addend s) (cadr s)) ; take the head of the rest of s -> (+ 1 2) -> (1 2) -> 1
+(define (augend s) (caddr s)) ; take teh head of the rest of the rest of s -> (+ 1 2) -> (1 2) -> (2) -> 2
+
+(make-sum '(x + 1) '(y + 1)) ; you now symbolic represented the sum (x + 1) + (y + 1) without needed to define either variable
+```
+
+Abelson/Sussman then touch upon a vexing problem with symbolic representation -- how do you determine whether two symbols are equal? How does a programming language actually implement these equality checks? Alas, they defer this discussion for later.
+
 
