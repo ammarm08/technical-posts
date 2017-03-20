@@ -320,15 +320,15 @@ In Lisp, this becomes possible with the use of the primitive `quote`:
 (cdr '(list (1 2 3))) ; (2 3)
 ```
 
-`quote` provides an abstract layer for representing data without needing to evaluate the underlying data. These become *symbols*, hence *symbolic representation*. You could, for example, define a series of functions that create and destructure symbolic representations of sums:
+`quote` provides an abstract layer for representing data without needing to evaluate the underlying data. These become *symbols*, hence expressions can now be *represented symbolically*. You could, for example, define a series of functions that create and destructure symbolic representations of sums:
 
 ```lisp
-(define (make-sum a b) (list '(+ a b))) ; (+ a b) now a symbol
+(define (make-sum a b) (list '(+ a b))) ; (+ a b) now an unevaluated list 
 (define (sum? s) (if (not (atom? s)) (eq? (car s) '+) nil)) ; check if first element is a '+' symbol
-(define (addend s) (cadr s)) ; take the head of the rest of s -> (+ 1 2) -> (1 2) -> 1
-(define (augend s) (caddr s)) ; take teh head of the rest of the rest of s -> (+ 1 2) -> (1 2) -> (2) -> 2
+(define (addend s) (cadr s)) ; ex. (addend '(+ 1 2)) => (car (cdr '(+ 1 2))) => (car '(1 2)) => 1
+(define (augend s) (caddr s)) ; ex. (augend '(+ 1 2)) => (car (cdr (cdr '(+ 1 2)))) => (car (cdr '(1 2))) => (car '(2)) => 2
 
-(make-sum '(x + 1) '(y + 1)) ; you now symbolic represented the sum (x + 1) + (y + 1) without needed to define either variable
+(make-sum '(x + 1) '(y + 1)) ; you now symbolically represented the sum (x + 1) + (y + 1) without needing to define either variable
 ```
 
 Abelson/Sussman then touch upon a vexing problem with symbolic representation -- how do you determine whether two symbols are equal? How does a programming language actually implement these equality checks? Alas, they defer this discussion for later.
