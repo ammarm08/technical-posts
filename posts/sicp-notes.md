@@ -1,8 +1,4 @@
-Last year, I distractedly worked through the first 3 chapters of *The Structure and Interpretation of Computer Programs*.
-It had come highly recommended to me from programmers I respected. But I had only begun my journey into computer science, and so *SICP*
-didn't really do it for me. I read it as a "How to Code" text. Which was the wrong way to read it.
-
-After a full year of diving deeper into "How to Code" (and subsequently into theory), I am now revisiting this text and so far it is reading like the Talmud. A lot of things I didn't notice
+After a full year of diving deeper into "How to Code" (and subsequently into theory), I am now revisiting *The Structure and Interpretation of Computer Programs* and so far it is reading like the Talmud. A lot of things I didn't notice
 the first time around I find myself reading and re-reading and pondering over.
 
 In this post, I'll be listing (and trying to keep up to date), some "aha!" moments. All mistakes are mine, please call them out when you see them :)
@@ -16,6 +12,7 @@ In this post, I'll be listing (and trying to keep up to date), some "aha!" momen
 - [Data Objects and Message Passing](#data-objects)
 - [Hierarchical Data Structures](#hierarchical-data)
 - [Symbolic Representation](#symbolic)
+- [Sets](#set)
 ### Chapter 3:
 ### Chapter 4:
 ### Chapter 5:
@@ -27,8 +24,7 @@ In this post, I'll be listing (and trying to keep up to date), some "aha!" momen
 > The evolution of a process is directed by a pattern of rules called a *program*. People create programs to direct processes.
 > In effect, we conjure the spirits of the computer with our spells.
 
-This passage gets less esoteric after studying computer architecture and operating systems (re: processes, threads
-of execution, and how these are represented and instantiated in memory by the kernel). Where to start: [Nand2Tetris](http://www.nand2tetris.org/) (write your own logic gates, ALUs, memory units, assembler, compiler, and virtual machine); [Operating Systems: Three Easy Pieces](http://pages.cs.wisc.edu/~remzi/OSTEP/) (exercise-driven discussion on how operating systems work)
+Where to start: [Nand2Tetris](http://www.nand2tetris.org/) (write your own logic gates, ALUs, memory units, assembler, compiler, and virtual machine); [Operating Systems: Three Easy Pieces](http://pages.cs.wisc.edu/~remzi/OSTEP/) (exercise-driven discussion on how operating systems work)
 
 ### <a name="recursion">Tail-Recursive & Registers</a>:
 
@@ -42,13 +38,6 @@ Hiding in the footnotes:
 > When we discuss the implementation of procedures on register machines, we will see that any iterative process can be realized "in hardware"
 > as a machine that has a fixed set of registers and no auxiliary memory. In contrast, realizing a recursive process requires a machine that
 > uses an auxiliary data structure known as a *stack*.
-
-When you've written enough Javascript and read enough trendy Functional Programming Lite blog posts, you run into the term "TCO" -- tail-call optimization.
-Many articles write about how you can make your programs more efficient with "tail recursion" because the v8 engine can optimize these tail calls
-such that calling that function won't lead to the dreaded "Maximum call stack size exceeded" error.
-
-It all sounds like magic until you realize they're talking about recursive v. iterative processes, stacks v. registers, 
-statefulness v. state encapsulation. Let's take the simple example Abelson/Sussman use of computing `b^n` (exponentiation).
 
 A *linearly recursive procedure* that calculates `b^n`:
 
@@ -73,7 +62,7 @@ const exp = (b, n) => {
 ```
 
 In the former case, not only does the return value of each function call depend on what its recursive call returns, the process must
-also somehow maintain state about this growing stack of calls. Why? Because when a recursive call returns, it must be then be applied
+also somehow maintain state about this growing stack of calls. Why? Because when a recursive call returns, it must then be applied
 to the "deferred operation" (`multiplying b * expR(b, n -1)`). This gets computationally expensive.
 
 In the latter case, all state transformations are represented in the parameters of each recursive call. As each function call goes along,
@@ -141,8 +130,7 @@ Then, while explaining an algorithm to find the global maximum of a unimodal fun
 > [...] we compare the function value at two intermediate points *x* and *y* in order to reduce the interval.
 > Thus, each reduction step requires that we find the value of the function at two intermediate points.
 
-Nevermind the specifics of these algorithms. What I noticed was viewing search
-as minimizing an interval to within a particular error tolerance.
+Search is the process of minimizing an interval to within a particular error tolerance.
 
 In a sorted list of unique integers where the error tolerance is 0, your initial
 interval lies between the first element and the last. A naive search of this type of list would look like:
@@ -200,7 +188,7 @@ const fraction = (numerator, denominator) => (dispatch) => dispatch(numerator, d
 
 This procedure takes a numerator and denominator, then returns a function. This returning function takes as an argument a dispatcher function (that a programmer can define) that will apply the numerator and denominator as its arguments.
 
-How is this useful? Now we have a procedure that has abstracted out the concept of a fraction. The numerator and denominator are simply variables bound by the `fraction` procedure. If we want to access the numerator, we could define a procedure such as:
+Now we have a procedure that has abstracted out the concept of a fraction. The numerator and denominator are simply variables bound by the `fraction` procedure. If we want to access the numerator, we could define a procedure such as:
 
 ```js
 const getNumerator = (z) => z((n, d) => n)
@@ -236,15 +224,13 @@ const addFractions = (a, b) => {
 const printFraction = (fraction) => console.log(getNumerator(fraction) + '/' + getDenominator(fraction))
 ```
 
-It gets more interesting when you think about representing a fraction in its most reduced form. Say we invoke `fraction(6, 8)`. More precisely, this fraction is `3 / 4`, but do we make that computation at construction time or at access time? That's up to the programmer to decide, depending on read/write requirements. If you anticipate writing fractions more often than accessing them, then maybe reducing upfront is unnecessary. But if you're reading fractions a lot, you don't want to slow things down to constantly reduce the fraction on access, so in this case you may consider reducing the fraction at construction time.
+But say we invoke `fraction(6, 8)`. This fraction in its reduced form is `3 / 4`, but do we make that computation at construction time or at access time? That's up to the programmer to decide, depending on read/write ratio. If you anticipate writing fractions more often than reading them, then maybe reducing upfront is unnecessary. But if you're reading fractions a lot, you don't want to slow things down to constantly reduce the fraction on access, so in this case you may consider reducing the fraction at construction time.
 
 As Abelman/Sussman say, all of this "further blurs the distinction between 'procedure' and 'data'."
 
 ### <a name="hierarchical-data">Hierarchical Data Structures</a>
 
-Paul Graham has often written something to the effect that all you really need is Lisp and C. C provides lower-level access to the operating system; Lisp provides an abstraction-building construct. C is a light wrapper around assembly/machine code; Lisp makes you question where data ends and a language begins.
-
-Fundamentally, working with Lisp reorders your thinking to work in binaries/pairs. Some extremely powerful procedures can be cooked up from the ground up.
+Working with Lisp reorders your thinking to work in binaries/pairs. Some extremely powerful procedures can be cooked up from the ground up.
 
 ```js
 
@@ -293,7 +279,7 @@ This is thinking in "binary" hierarchies (a collection is a pair formed by one t
 
 Pros: this is a powerful problem-solving mindset: it reduces a problem to a set of subproblems. You can literally "feel the bits sliding in between your fingers."
 
-Cons: "LISP programmers know the value of everything and the cost of nothing" - Alan Perlis. Recursive procedures, as we've learned, aren't always the fastest or memory-efficient.
+Cons: "LISP programmers know the value of everything and the cost of nothing" - Alan Perlis. Recursive procedures, as we've learned, aren't always the fastest or most memory-efficient.
 
 ### <a name="symbolic">Symbolic Representation</a>
 
@@ -301,9 +287,9 @@ Cons: "LISP programmers know the value of everything and the cost of nothing" - 
 > development of a computer language for symbol manipulation. Furthermore, it marked the beginning of the line of research that
 > led to the development of powerful systems for symbolic mathematical work.
 
-The early history of computing owes a lot to logicians and mathematicians, especially in the realm of calculus. As my understanding of it goes, calculus preoccupies itself with the study of continuous change -- how a quantity moves from one discrete value to the next; conversely, how systems of motion can be described in terms of the rate of change between discrete values of infinitesimally small distance away from each other. Derivatives and integrals.
+The early history of computing owes a lot to logicians and mathematicians, especially in the realm of calculus. As my understanding of it goes, calculus preoccupies itself with the study of continuous change -- how a quantity moves from one discrete value to the next.
 
-Anyways, while the axioms and theorems and formalisms were well developed, computation provided a pretty enticing promise -- that we could use it to approximate differentials with increasing precision. To be able to do this though, we'd need a way to represent data abstractly without immediately binding values to symbols until we absolutely needed to.
+We can use computing to approximate differentials with increasing precision. To be able to do this though, we'd need a way to represent data abstractly without immediately binding values to symbols until we absolutely needed to.
 
 In other words, how do can we work with and evaluate expressions like this abstractly (aka without actual values attached to the variables?):
 
@@ -333,4 +319,77 @@ In Lisp, this becomes possible with the use of the primitive `quote`:
 
 Abelson/Sussman then touch upon a vexing problem with symbolic representation -- how do you determine whether two symbols are equal? How does a programming language actually implement these equality checks? Alas, they defer this discussion for later.
 
+### <a name="set"> Sets </a>
 
+A set is a collection of distinct objects. We define it in terms of its interface, which is: `has?`, `add`, `union`, and `intersection`. How do we represent this compound data structure?
+
+One option is to implement it as an unordered list:
+
+```js
+const make_set = (x) => cons(x || null, null)
+
+const has = (x, set) => {
+  if (isNull(set)) return false
+  else if (x === car(set)) return true
+  else return has(x, cdr(set))
+}
+
+const add = (x, set) => {
+  if (has(x, set)) return set
+  else return cons(x, set)
+}
+```
+
+Representing a set as an unordered list carries an `O(n)` on all `add` and `has` operations. 
+
+We could also implement a set as an ordered list.
+
+```js
+// same as above
+const make_set = (x) => cons(x || null, null)
+
+// assumes sorted
+const has = (x, set) => {
+  if (isNull(set)) return false
+  else if (x === car(set)) return true
+  else if (x < car(set)) return false
+  else return has(x, cdr(set))
+}
+
+// sorting algorithm
+const add = (x, set) => {
+  if (isNull(set)) return make_set(x)
+  else if (x === car(set)) return set
+  else if (x < car(set)) return make_set(x, cdr(set))
+  else return make_set(car(set), add(x, cdr(set)))
+}
+```
+
+On `add`, we incur some time cost to sort the list (`O(n log(n))`. But now the set has some underlying order, and all subsequent operations don't have to always scan through the entire set.
+
+We can do better and implement a set as a binary tree:
+
+```js
+const tree = (x, l, r) => cons(x || null, l || cons(null, r || cons(null, null)))
+const entry = (tree) => car(tree)
+const left_branch = (tree) => car(cdr(tree))
+const right_branch = (tree) => car(cdr(cdr(tree)))
+
+const make_set = (x, l, r) => tree(x, l, r)
+
+const has = (x, set) => {
+  if (isNull(set)) return false
+  else if (x === entry(set)) return true
+  else if (x < entry(set)) return has(x, left_branch(x, set))
+  else return has(x, right_branch(x, set))
+}
+
+const add = (x, set) => {
+  if (isNull(set)) return make_set(x)
+  else if (x === entry(set)) return set
+  else if (x < entry(set)) return make_set(entry(set), add(x, left_branch(set)), right_branch(set))
+  else return make_set(entry(set), left_branch(set), add(x, right_branch(set)))
+}
+```
+
+And this representation of a set gives us the magical `O(log(n))` lookup time. 
