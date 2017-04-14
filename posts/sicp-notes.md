@@ -2,20 +2,27 @@ I started my programming journey in mid-2015. My wisest CS friends recommended *
 
 In this post, I'll be listing (and trying to keep up to date), some "aha!" moments. All mistakes are mine, please call them out when you see them :)
 
-### Chapter 1:
+### Chapter 1: Building Abstractions with Procedures
 - [Processes, Programs, and Data](#processes)
 - [Tail-Recursive Procedures and Registers](#recursion)
 - [Higher-Order Procedures and Composition](#composition)
 - [Search as an Interval Minimizing Function](#search)
-### Chapter 2:
+### Chapter 2: Building Abstractions with Data
 - [Data Objects and Message Passing](#data-objects)
 - [Hierarchical Data Structures](#hierarchical-data)
 - [Symbolic Representation](#symbolic)
-- [Sets](#set)
+- [Representing Sets](#set)
 - [Type Systems](#manifest)
-### Chapter 3:
-### Chapter 4:
-### Chapter 5:
+### Chapter 3: Modularity, Objects, and State
+- [Local State and Environments](#state)
+- [Representing Queues](#queues)
+- [Representing Tables](#tables)
+- [Simulating Digital Circuits](#circuitry)
+- [Streams](#streams)
+- [Infinite Streams](#infinite-streams)
+- [Normal-Order and Delayed Evaluation](#eval)
+### Chapter 4: Metalinguistic Abstraction
+### Chapter 5: Computing with Register Machines
 
 
 ### <a name="processes">On the Magic of Processes</a>:
@@ -469,4 +476,30 @@ The pros of fully static typing and operability are that it is strict on what it
 
 The pros of coercion are that we can be more permissive with how we program, for example, multiplying strings by integers (`3 * 's' === 'sss'`). Some cons are that i) compilers may have a tougher time optimizing dynamically typed languages, and ii) type coercion can involve defining type hierarchies (x is a type of y is a type of z), which can further complicate a programmer's understanding of what is actually going on under the hood.
 
+### <a name="state"> Local State and Environments </a>
 
+To-do
+
+### <a name="queues"> Representing Queues </a>
+
+To-do 
+
+### <a name="tables"> Representing Tables </a>
+
+To-do
+
+### <a name="circuitry"> Simulating Digital Circuits </a>
+
+To-do
+
+### <a name="streams"> Streams </a>
+
+To-do
+
+### <a name="infinite-streams"> Infinite Streams </a>
+
+To-do
+
+### <a name="eval"> Normal-Order and Delayed Evaluation </a>
+
+To-do
