@@ -12,6 +12,7 @@ In this post, I'll be listing (and trying to keep up to date), some "aha!" momen
 - [Hierarchical Data Structures](#hierarchical-data)
 - [Symbolic Representation](#symbolic)
 - [Sets](#set)
+- [Type Systems](#manifest)
 ### Chapter 3:
 ### Chapter 4:
 ### Chapter 5:
@@ -396,3 +397,76 @@ And this representation of a set gives us the magical `O(log(n))` lookup time.
 Each of these set representations are immutable -- that is, adding or removing elements from the set returns a *new* set with the target element added/removed.
 
 Another thing to note is that the performance benefits of a binary tree only apply if the tree remains balanced over the long-haul. Imagine inserting elements in the order 1 - 2 - 3 - 4 - 5. We'd just have a linked list (therefore `O(n)` lookup). This is where balancing tree algorithms find much of their utility.
+
+### <a name="manifest"> Manifest Types, Dispatching on Type, and Message Passing </a>
+
+> One way to view data abstraction is as an application to program design of the "principle of least commitment." By setting up
+> selectors and constructors as an abstraction barrier, we can defer to the last possible moment the choice of a concrete representation
+> for our data objects and thus retain maximum flexibility in our system design.
+
+If we want to continue building abstract data types like those we've run into in the wild (binary trees, sets, arrays, streams, etc), then we need a way to represent them, identify them, and create rules on how we can use them. Can I multiply a number by a string? Can I add a list to a set? How do we represent valid (and invalid) operations?
+
+A simple abstraction we can use to represent our data objects could be an `attach-type` function:
+
+```js
+const attach_type = (type, contents) => cons(type, contents)
+const type = (datum) => !atom(datum) ? car(datum) : Error(`Bad typed datum -- TYPE, ${datum}`)
+const contents = (datum) => !atom(datum) ? cdr(datum) : Error(`Bad typed datum -- CONTENTS, ${datum}`)
+```
+
+This very basic type system means that each data object is a tuple, with the `car` maintaining type information, and the `cdr` maintaining the contents/payload. Now we can identify our data types like this:
+
+```js
+const is_array = (z) => type(z) === 'array'
+const array = type('array', make_array())
+```
+
+This is very reminiscent of what Eric Raymond writes about in *The Cathedral and the Bazaar* re: the primary of data structures:
+
+> Smart data structures and dumb code works a lot better than the other way around.
+
+Of course, a data structure isn't just a vessel for data; it is also a means by which to operate on the data. Ways we can define expected behavior of certain operations are generally separated by either *dispatching on type* or *message passing*.
+
+Here's an example of dispatching on type against "real" and "imaginary" numbers:
+
+```js
+const op_table = make_table() // don't worry about this for now
+
+// add to op_table using a predefined 'put' procedure
+put('rectangular', 'real-part', real-part-rectangular)
+put('rectangular', 'imag-part', imag-part-rectangular)
+
+const operate = (op, obj) => {
+  let proc = get(type(obj), op) // from the op_table, get the op for the given obj type
+  return !isNull(proc) ? proc(contents(obj)) : Error(`Operator undefined -- OPERATE, ${list(op, obj)}`)
+}
+
+const real_part = (obj) => operate('real-part', obj)
+const imag_part = (obj) => operate('imag-part', obj)
+```
+There's a lot going on here. The main thing to notice is that this program maintains a global table with operations that are available to every type. So we look up the object type, then look up the operation we're trying to run. If this operation is found for that type, we run that procedure; otherwise we throw an error.
+
+In contrast, messaging passing looks like this:
+
+```js
+const make_rectangular = (x, y) => {
+  const dispatch = (m) => {
+    if (m === 'real-part') return x
+    else if (m === 'imag-part') return y
+    else return `Unknown op -- MAKE-RECTANGULAR, ${m}`
+  }
+  
+  return dispatch
+}
+```
+
+When we dispatch by type, we look up an object's type, then look up the desired operation within this entry.
+When we dispatch by message passing, the object itself encloses its own valid operations.
+
+A brief note about interoperability and coercion -- now that we have a couple ways to get started on a type system, we have to think about the strategies we wish to use to run an operation against several data objects. Should we only allow objects of the same type to operate against each other? Or will we allow coercion?
+
+The pros of fully static typing and operability are that it is strict on what it allows, which means less space for programmer error and possibly an easier time for the compiler to optimize code paths. The cons are that a programming language designer has to think very carefully about how to implement these data types and how she imagines programmers to be using them day to day.
+
+The pros of coercion are that we can be more permissive with how we program, for example, multiplying strings by integers (`3 * 's' === 'sss'`). Some cons are that i) compilers may have a tougher time optimizing dynamically typed languages, and ii) type coercion can involve defining type hierarchies (x is a type of y is a type of z), which can further complicate a programmer's understanding of what is actually going on under the hood.
+
+
