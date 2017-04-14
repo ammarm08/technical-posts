@@ -1,5 +1,4 @@
-After a full year of diving deeper into "How to Code" (and subsequently into theory), I am now revisiting *The Structure and Interpretation of Computer Programs* and so far it is reading like the Talmud. A lot of things I didn't notice
-the first time around I find myself reading and re-reading and pondering over.
+I started my programming journey in mid-2015. My wisest CS friends recommended *The Structure and Interpretation of Computer Programs*, but it entirely flew over my head. Now I'm revisiting it 18 months later, and it's reading like the Talmud.
 
 In this post, I'll be listing (and trying to keep up to date), some "aha!" moments. All mistakes are mine, please call them out when you see them :)
 
@@ -370,18 +369,18 @@ On `add`, we incur some time cost to sort the list (`O(n log(n))`. But now the s
 We can do better and implement a set as a binary tree:
 
 ```js
-const tree = (x, l, r) => cons(x || null, l || cons(null, r || cons(null, null)))
+const tree = (x, l, r) => list(x, l, r)
 const entry = (tree) => car(tree)
 const left_branch = (tree) => car(cdr(tree))
 const right_branch = (tree) => car(cdr(cdr(tree)))
 
-const make_set = (x, l, r) => tree(x, l, r)
+const make_set = (x, l, r) => tree(x, list(), list())
 
-const has = (x, set) => {
+const has = (set, x) => {
   if (isNull(set)) return false
   else if (x === entry(set)) return true
-  else if (x < entry(set)) return has(x, left_branch(x, set))
-  else return has(x, right_branch(x, set))
+  else if (x < entry(set)) return has(left_branch(set), x)
+  else return has(right_branch(set), x)
 }
 
 const add = (x, set) => {
@@ -392,4 +391,8 @@ const add = (x, set) => {
 }
 ```
 
-And this representation of a set gives us the magical `O(log(n))` lookup time. 
+And this representation of a set gives us the magical `O(log(n))` lookup time.
+
+Each of these set representations are immutable -- that is, adding or removing elements from the set returns a *new* set with the target element added/removed.
+
+Another thing to note is that the performance benefits of a binary tree only apply if the tree remains balanced over the long-haul. Imagine inserting elements in the order 1 - 2 - 3 - 4 - 5. We'd just have a linked list (therefore `O(n)` lookup). This is where balancing tree algorithms find much of their utility.
