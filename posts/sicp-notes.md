@@ -15,9 +15,7 @@ In this post, I'll be listing (and trying to keep up to date), some "aha!" momen
 - [Type Systems](#manifest)
 ### Chapter 3: Modularity, Objects, and State
 - [Local State and Environments](#state)
-- [Representing Queues](#queues)
 - [Representing Tables](#tables)
-- [Simulating Digital Circuits](#circuitry)
 - [Streams](#streams)
 - [Infinite Streams](#infinite-streams)
 - [Normal-Order and Delayed Evaluation](#eval)
@@ -520,16 +518,7 @@ MAP_SQUARE FRAME:
 
 To visualize this, take a look at this [diagram](https://mitpress.mit.edu/sicp/full-text/book/ch3-Z-G-2.gif)
 
-
-### <a name="queues"> Representing Queues </a>
-
-To-do 
-
 ### <a name="tables"> Representing Tables </a>
-
-To-do
-
-### <a name="circuitry"> Simulating Digital Circuits </a>
 
 To-do
 
