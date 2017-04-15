@@ -478,7 +478,48 @@ The pros of coercion are that we can be more permissive with how we program, for
 
 ### <a name="state"> Local State and Environments </a>
 
-To-do
+> In a system composed of many objects, the objects are rarely completely independent. Each may influence the states of others through
+> interactions, which serve to couple the state variables of one object to those of other objects.
+
+and
+
+> An environment is a sequence of frames. Each frame is a table (possibly empty) of bindings, which associate variable names 
+> with their corresponding values. (A single frame may contain at most one binding for any variable.) Each frame also has a
+> pointer to its enclosing environment, unless, for the purposes of discussion, the frame is considered to be global.
+
+So far, Abelson & Sussman have ignored assignment and state. All of our data structures and procedures have been immutable. To insert or remove an element from a set, for example, we constructed a *new* set.
+
+However, certain data objects have coupled relationships (ex. withdrawing from a bank requires a stateful "balance"). This balance must be able to be mutated and accessed and persisted from outside of the `withdraw` procedure. 
+
+The same principle applies to calling procedures and procedures within procedures. In the following example:
+
+```js
+const map = (f, list) => isNull(list) ? null : cons(f(car(list)), map(f, cdr(list)))
+
+const square = (x) => x * x
+
+const map_square = (list) => map(square, list)
+```
+
+How does `square_map` know anything about `square` or `map`? How does each procedure know anything about its arguments? This is where *environments* come into place. These are sequences of tables that store bindings to particular values that are progressively looked up, first locally, then to each subsequent parent frame until no more frames can be looked up (at which point the program assumes that value a procedure called is undefined). Roughly like this ...
+
+```bash
+GLOBAL FRAME:
+... 
+a bunch of other bindings
+...
+
+'map': map,
+'square': square
+'map_square': map_square
+
+MAP_SQUARE FRAME:
+'parameters': { 'list': some_list }
+'parent': pointer_to_global_frame
+```
+
+To visualize this, take a look at this [diagram](https://mitpress.mit.edu/sicp/full-text/book/ch3-Z-G-2.gif)
+
 
 ### <a name="queues"> Representing Queues </a>
 
