@@ -584,18 +584,79 @@ In the above example, a table could be visualized as a list of key-value pairs:
 ]
 ```
 
-Another useful way to represent table is as two-dimensional data structures. In this representation, any given value is indexed by *two* keys. The first key maps to a particular subtable, and the second key maps to a value/record in that subtable. As we'll see later, this form of "misdirection" gives our tables more flexibility in how they store and retrieve data. For example, we could certainly improve performance on lookups by somehow arranging data to allow binary searches.
+Another useful way to represent tables is as two-dimensional data structures. In this representation, any given value is indexed by *two* keys. The first key maps to a particular subtable, and the second key maps to a value/record in that subtable. As we'll see later, this form of "misdirection" gives our tables more flexibility in how they store and retrieve data. For example, we could certainly improve performance on lookups by somehow arranging data to allow binary searches.
 
-### <a name="streams"> Streams </a>
+### <a name="streams"> Stream Operations </a>
 
 > Instead of using objects with changing local state, we construct a stream that represents the *time history* of the 
 > system being modeled. A consequence of this strategy is that it allows us to model systems that have state without ever
 > using assignment or mutable data.
 
+When we define a list, we already know a lot about it -- namely, its length, elements, and order.
+
+Here, we define another data structure called a stream, which treats data as *signals* flowing independently through stages. They can be *enumerated* one by one, *filtered* to keep only valid signals, *transduced* to change each signal into some standard form/shape, then *accumulated* into a single form.
+
+Before showing a basic implementation of a stream, Abelson & Sussman instead us through these stream operations (enumerators, filters, tranducers, and acccumulators).
+
+```js
+const map = (fn, stream) => {
+  return emptyStream(stream) ? 
+         cons_stream()  : 
+         cons_stream(head(stream), map(fn, tail(stream)))
+}
+
+const filter = (predicate, stream) => {
+  return emptyStream(stream) ? 
+         con_stream()   : 
+         (predicate(head(stream) ?
+          cons_stream(car(stream), filter(predicate, tail(stream)) :
+          filter(predicate, tail(stream))
+}
+
+const accumulate = (fn, init, stream) => {
+  return emptyStream(stream) ? 
+         init :
+         fn(head(stream), accumulate(fn, init, tail(stream))
+}
+```
+
+As we'll see below with the stream implementation, we can apply these operations on streams *just in time* using delayed evaluation. That means `map(square, some_stream)` doesn't map the entire stream upfront, but only as the stream is processed signal by signal.
 
 ### <a name="infinite-streams"> Infinite Streams </a>
 
-To-do
+> Our implementation of streams will be based on a special form called `delay`. Evaluating the form `delay <exp>` does not evaluate the
+> expression `<exp>`, but rather returns a so-called *delayed object*, which we can think of as a "promise" to evaluate `<exp>` at
+> some future time.
+
+A basic stream implementation that can handle infinitely long streams.
+
+```js
+const cons_stream = (a, b) => cons(a, delay(b))
+const head = (stream) => car(stream)
+const tail = (stream) => force(cdr(stream))
+
+const force = (delayed_object) => delayed_object()
+
+const memoize = (proc) => {
+  let ran, result
+  return () => {
+    if (!ran) {
+      result = proc
+      ran = !ran
+      return result
+    }
+    
+    return result
+  }
+}
+
+const delay = memoize(fn)
+```
+
+Accessing the `head` of the stream is familiar (a simple `car` op).
+
+However, to be able to delay computation of the rest of the stream, we memoize the tail. This delays evaluation until the function
+returned (the `delayed object`) is actually invoked. Memoization not only helps with delayed evaluation, but it also helps make sure we only compute something once (after which we store the results).
 
 ### <a name="eval"> Normal-Order and Delayed Evaluation </a>
 
