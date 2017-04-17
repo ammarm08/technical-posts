@@ -14,7 +14,8 @@ In this post, I'll be listing (and trying to keep up to date), some "aha!" momen
 - [Representing Sets](#set)
 - [Type Systems](#manifest)
 ### Chapter 3: Modularity, Objects, and State
-- [Local State and Environments](#state)
+- [Local State and Assignment](#state)
+- [Environments and Contexts](#environment)
 - [Representing Tables](#tables)
 - [Streams](#streams)
 - [Infinite Streams](#infinite-streams)
@@ -474,22 +475,46 @@ The pros of fully static typing and operability are that it is strict on what it
 
 The pros of coercion are that we can be more permissive with how we program, for example, multiplying strings by integers (`3 * 's' === 'sss'`). Some cons are that i) compilers may have a tougher time optimizing dynamically typed languages, and ii) type coercion can involve defining type hierarchies (x is a type of y is a type of z), which can further complicate a programmer's understanding of what is actually going on under the hood.
 
-### <a name="state"> Local State and Environments </a>
+### <a name="state"> Local State and Assignment </a>
 
 > In a system composed of many objects, the objects are rarely completely independent. Each may influence the states of others through
 > interactions, which serve to couple the state variables of one object to those of other objects.
 
-and
+So far, Abelson & Sussman have ignored assignment and state. All of our data structures and procedures have been immutable. To insert or remove an element from a set, for example, we constructed a *new* set, bound to a new variable.
+
+However, certain data objects have coupled relationships (ex. withdrawing from a bank requires a stateful "balance"). This balance must be able to be mutated and accessed and persisted from outside of the `withdraw` procedure.
+
+Up until now, our concept of variables and values was this -- that a variable was merely a symbolic representation of an underlying value. We could continually evaluate our programs using the substitution model, knowing that whenever we encountered `x`, it would indeed be `4` or whatever we bound it to. 
+
+But *assignment* changes the mental model of computation -- variables aren't just symbols for values. Rather, they are *locations* for mutable values.
+
+Compare immutable variable expression ...
+
+```js
+const x = make_set()
+const y = add(5, x)
+const z = add(6, y)
+
+// x is empty, y has 5, z has 5 and 6
+```
+
+... to mutable variable assignment:
+
+```js
+let x = make_set()
+add(5, x)
+add(6, x)
+
+// x is now a set with 5 and 6
+```
+
+### <a name="environment"> Environments and Contexts </a>
 
 > An environment is a sequence of frames. Each frame is a table (possibly empty) of bindings, which associate variable names 
 > with their corresponding values. (A single frame may contain at most one binding for any variable.) Each frame also has a
 > pointer to its enclosing environment, unless, for the purposes of discussion, the frame is considered to be global.
 
-So far, Abelson & Sussman have ignored assignment and state. All of our data structures and procedures have been immutable. To insert or remove an element from a set, for example, we constructed a *new* set.
-
-However, certain data objects have coupled relationships (ex. withdrawing from a bank requires a stateful "balance"). This balance must be able to be mutated and accessed and persisted from outside of the `withdraw` procedure. 
-
-The same principle applies to calling procedures and procedures within procedures. In the following example:
+In the following example:
 
 ```js
 const map = (f, list) => isNull(list) ? null : cons(f(car(list)), map(f, cdr(list)))
@@ -520,11 +545,53 @@ To visualize this, take a look at this [diagram](https://mitpress.mit.edu/sicp/f
 
 ### <a name="tables"> Representing Tables </a>
 
-To-do
+A table is a generic data structure that stores data as key-value or key-record relations. In the above example with environments and frames, looking up `square` in the global table would retrieve the "record" or "value" associated with it (in this case, `lambda (x) x * x`).
+
+So how can we implement this? One straightforward method: a one-dimensional table with linear gets and sets:
+
+```js
+
+// first item in list is a TABLE symbol. thus recurring on cdr(table) lets us linearly scan the records
+const make_table = () => list('TABLE')
+
+const lookup = (key, table) => {
+  const record = assq(key, cdr(table))
+  return isNull(record) ? null : recrd
+}
+
+const assq = (key, records) => {
+  if (isNull?(records)) return null
+  else if (key == car(car(records))) return car(records)
+  else return assq(key, cdr(records))
+}
+
+const insert = (key, value, table) => {
+  const record = assq(key, cdr(table))
+  return isNull(record) ? set-cdr(table, cons( cons(key, value), cdr(table) )
+                        : set-cdr(record, value)
+}
+```
+
+In the above example, a table could be visualized as a list of key-value pairs:
+
+```bash
+[ TABLE, 
+  [ ('k1', 'v1'), 
+    [ ('k2', v2'), 
+      [ ..., nil ] 
+    ] 
+  ] 
+]
+```
+
+Another useful way to represent table is as two-dimensional data structures. In this representation, any given value is indexed by *two* keys. The first key maps to a particular subtable, and the second key maps to a value/record in that subtable. As we'll see later, this form of "misdirection" gives our tables more flexibility in how they store and retrieve data. For example, we could certainly improve performance on lookups by somehow arranging data to allow binary searches.
 
 ### <a name="streams"> Streams </a>
 
-To-do
+> Instead of using objects with changing local state, we construct a stream that represents the *time history* of the 
+> system being modeled. A consequence of this strategy is that it allows us to model systems that have state without ever
+> using assignment or mutable data.
+
 
 ### <a name="infinite-streams"> Infinite Streams </a>
 
