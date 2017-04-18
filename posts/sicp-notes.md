@@ -69,25 +69,12 @@ const exp = (b, n) => {
 
 In the former case, not only does the return value of each function call depend on what its recursive call returns, the process must
 also somehow maintain state about this growing stack of calls. Why? Because when a recursive call returns, it must then be applied
-to the "deferred operation" (`multiplying b * expR(b, n -1)`). This gets computationally expensive.
+to the "deferred operation" (`multiplying b * expR(b, n -1)`). This gets computationally expensive because each recursive call thus needs to maintain knowledge of this in its stack frame. These stack frames build up as each recursive function call maintains its own stack frame.
 
 In the latter case, all state transformations are represented in the parameters of each recursive call. As each function call goes along,
-it carries with it all state transformations. The product is calculated immediately as opposed to being deferred.
+it carries with it all state transformations.
 
-An interpreter that handles tail-recursive procedures, then, will notice the "tail" position of the recursive procedure, identify the
-pattern of state transformation it makes from one call to the next, and then perhaps represent it in assembly code as a tight, efficient
-loop of computation. Perhaps similar to:
-
-```js
-const expIter = (b, n) => {
-  let counter = n, product = 1
-  while (counter--) {
-    product *= b
-  }
-  
-  return product
-}
-```
+A smart compiler that handles tail-recursive procedures, then, will notice that a tail-recursive procedure's last instruction simply returns the value computed by calling another function. So the compiler will call that function and not reserve any stack space for each recursive call.
 
 ### <a name="composition">Function Composition</a>
 
@@ -450,7 +437,7 @@ const operate = (op, obj) => {
 const real_part = (obj) => operate('real-part', obj)
 const imag_part = (obj) => operate('imag-part', obj)
 ```
-There's a lot going on here. The main thing to notice is that this program maintains a global table with operations that are available to every type. So we look up the object type, then look up the operation we're trying to run. If this operation is found for that type, we run that procedure; otherwise we throw an error.
+The main thing to notice is that this program maintains a global table with operations that are available to every type. So we look up the object type, then look up the operation we're trying to run. If this operation is found for that type, we run that procedure; otherwise we throw an error.
 
 In contrast, messaging passing looks like this:
 
@@ -471,7 +458,7 @@ When we dispatch by message passing, the object itself encloses its own valid op
 
 A brief note about interoperability and coercion -- now that we have a couple ways to get started on a type system, we have to think about the strategies we wish to use to run an operation against several data objects. Should we only allow objects of the same type to operate against each other? Or will we allow coercion?
 
-The pros of fully static typing and operability are that it is strict on what it allows, which means less space for programmer error and possibly an easier time for the compiler to optimize code paths. The cons are that a programming language designer has to think very carefully about how to implement these data types and how she imagines programmers to be using them day to day.
+The pros of fully static typing and operability are that it is strict on what it allows, which means less space for programmer error and possibly an easier time for the compiler to optimize code paths. The cons are that a programming language designer has to think very carefully about how to implement these data types and how she imagines programmers to be using them day to day. It also limits programmer flexibility in how he writes his programs.
 
 The pros of coercion are that we can be more permissive with how we program, for example, multiplying strings by integers (`3 * 's' === 'sss'`). Some cons are that i) compilers may have a tougher time optimizing dynamically typed languages, and ii) type coercion can involve defining type hierarchies (x is a type of y is a type of z), which can further complicate a programmer's understanding of what is actually going on under the hood.
 
@@ -655,8 +642,30 @@ const delay = memoize(fn)
 
 Accessing the `head` of the stream is familiar (a simple `car` op).
 
-However, to be able to delay computation of the rest of the stream, we memoize the tail. This delays evaluation until the function
-returned (the `delayed object`) is actually invoked. Memoization not only helps with delayed evaluation, but it also helps make sure we only compute something once (after which we store the results).
+Accessing the rest of the stream involves using the special form `delay`, which informs the interpreter to delay evaluation of (`cdr stream`). The special form `force` informs the interpreter when to actually evaluate.
+
+The `memoize` function is a delayed-eval optimization technique (often referenced as `call-by-need` evaluation). It prevents a procedure from having to compute the same operation more than once.
+
+Using delayed evaluation, we can redefine many of our stream operations, construct infinitely long streams, and merge/combine multiple streams.
+
+For example, we can model the *Sieve of Eratosthenes* using infinite streams:
+
+```js
+const sieve = (stream) => {
+  return cons-stream(head(stream), sieve(
+    filter(x => x % head(stream) !== 0,
+           tail(stream))))
+}
+
+const integers-from = (n) => cons-stream(n, integers-from(n + 1))
+
+const primes = sieve(integers-from(2))
+
+```
+
+The Sieve of Eratosthenes constructs a stream of prime numbers using a stream that progressively filters the tail stream of all integers not divisible by the head.
+
+So when the head is 2, the tail stream, when evaluated, will not include any integers divisible by 2. When the head is 3, the tail stream, when evaluated, will not include any integers divisible by 2 or 3, etc etc.
 
 ### <a name="eval"> Normal-Order and Delayed Evaluation </a>
 
