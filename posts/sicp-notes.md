@@ -19,9 +19,11 @@ In this post, I'll be listing (and trying to keep up to date), some "aha!" momen
 - [Representing Tables](#tables)
 - [Streams](#streams)
 - [Infinite Streams](#infinite-streams)
-- [Normal-Order and Delayed Evaluation](#eval)
 ### Chapter 4: Metalinguistic Abstraction
 ### Chapter 5: Computing with Register Machines
+
+
+
 
 
 ### <a name="processes">On the Magic of Processes</a>:
@@ -667,6 +669,3 @@ The Sieve of Eratosthenes constructs a stream of prime numbers using a stream th
 
 So when the head is 2, the tail stream, when evaluated, will not include any integers divisible by 2. When the head is 3, the tail stream, when evaluated, will not include any integers divisible by 2 or 3, etc etc.
 
-### <a name="eval"> Normal-Order and Delayed Evaluation </a>
-
-To-do
