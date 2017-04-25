@@ -1,7 +1,3 @@
-I started my programming journey in mid-2015. My wisest CS friends recommended *The Structure and Interpretation of Computer Programs*, but it entirely flew over my head. Now I'm revisiting it 18 months later, and it's reading like the Talmud.
-
-In this post, I'll be listing (and trying to keep up to date), some "aha!" moments. All mistakes are mine, please call them out when you see them :)
-
 ### Chapter 1: Building Abstractions with Procedures
 - [Processes, Programs, and Data](#processes)
 - [Tail-Recursive Procedures and Registers](#recursion)
@@ -70,11 +66,9 @@ const exp = (b, n) => {
 ```
 
 In the former case, not only does the return value of each function call depend on what its recursive call returns, the process must
-also somehow maintain state about this growing stack of calls. Why? Because when a recursive call returns, it must then be applied
-to the "deferred operation" (`multiplying b * expR(b, n -1)`). This gets computationally expensive because each recursive call thus needs to maintain knowledge of this in its stack frame. These stack frames build up as each recursive function call maintains its own stack frame.
+also somehow maintain state about this growing stack of calls. Why? Because when a recursive call returns, it must then compute the "deferred operation" (`multiplying b * expR(b, n -1)`). This gets expensive because each recursive call thus needs to maintain knowledge of this in its stack frame. These stack frames build up as each recursive function call maintains its own stack frame.
 
-In the latter case, all state transformations are represented in the parameters of each recursive call. As each function call goes along,
-it carries with it all state transformations.
+In the latter case, the return value of a function is fully represented by the return value of the recursive call (which carries with it, presumably, any state transformations).
 
 A smart compiler that handles tail-recursive procedures, then, will notice that a tail-recursive procedure's last instruction simply returns the value computed by calling another function. So the compiler will call that function and not reserve any stack space for each recursive call.
 
@@ -271,10 +265,6 @@ const sum = reduce(xs, (total, x) => total + x, 0) // sum: 1 + 2 + 3 + 4 + 5 = 1
 ```
 
 This is thinking in "binary" hierarchies (a collection is a pair formed by one thing and a collection of another pair formed by one thing and a collection of another pair formed by ... etc).
-
-Pros: this is a powerful problem-solving mindset: it reduces a problem to a set of subproblems. You can literally "feel the bits sliding in between your fingers."
-
-Cons: "LISP programmers know the value of everything and the cost of nothing" - Alan Perlis. Recursive procedures, as we've learned, aren't always the fastest or most memory-efficient.
 
 ### <a name="symbolic">Symbolic Representation</a>
 
@@ -524,6 +514,8 @@ a bunch of other bindings
 'map': map,
 'square': square
 'map_square': map_square
+'parent': null
+
 
 MAP_SQUARE FRAME:
 'parameters': { 'list': some_list }
