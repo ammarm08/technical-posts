@@ -45,6 +45,16 @@ On a related note, Lisp has two primary equality functions: `eql` and `eq`. `eql
 
 ## A Compression Algorithm
 
+The key mental leap I'm finding with Lisp is understanding the "shape" of a problem.
+
+Take a list of bits which we want to compress somehow. A straightforward compressor would convert
+`11101000` into something that resembles `[3, 1] 0 1 [3, 0]`. That is, when a sequence repeats, we
+compress that into a tuple.
+
+The shape this takes I mentally imagine as a main process (iterating across the list) with an embedded process (checking for sequence repeats). Perhaps like the Earth's path around the Sun -- a main elliptical orbit throughout which the Earth rotates.
+
+In the example below, `compress` gets the process going, and `compr` keeps track of the number of bits `n` in the current sequence. If the next bit in the list is the same as the current bit, we increment `n`; otherwise, we lay down a `[n, bit]` tuple and check the rest of the list.
+
 ```lisp
 (defun compress (x) 
   (if (consp x)
@@ -67,7 +77,11 @@ On a related note, Lisp has two primary equality functions: `eql` and `eq`. `eql
 
 ; example
 (compress '(1 1 1 0 1 0 0 0 0 1)) ; returns ((3 1) 0 1 (4 0) 1)
+```
 
+The shape of uncompression is a linear map. We iterate straight across the compressed input, and for each element in the input list, we check if its a tuple or not. If it is, we construct an `n`-length list of `bit` bits. Otherwise we just return the current element. We accumulate these results into a flattened list.
+
+```lisp
 (defun uncompress (lst)
   (if (null lst)
       nil
@@ -86,3 +100,30 @@ On a related note, Lisp has two primary equality functions: `eql` and `eq`. `eql
 (uncompress '((3 1) 0 1 (4 0) 1)) ; returns (1 1 1 0 1 0 0 0 0 1)
 ```
 
+## Shortest Path Algorithm
+
+```lisp
+(defun shortest-path (start end net)
+  (bfs end (list (list start)) net))
+
+; main problem: which path of nodes lead to shortest distance from start to end?
+(defun bfs (end queue net)
+  (if (null queue)
+      nil
+      (let ((path (car queue)))
+        (let ((node (car path)))
+          (if (eql node end)
+              (reverse path)
+              (bfs end
+                  (append (cdr queue)
+                          (new-paths path node net))
+                   net))))))
+
+; subproblem: which nodes can we immediately get to from 'node'?
+(defun new-paths (path node net)
+  (mapcar #'(lambda (n) (cons n path))
+          (cdr (assoc node net))))
+
+; example
+(shortest-path 'a 'c '('(a b c) '(b c) '(c d)))  ; returns (A C)
+```
