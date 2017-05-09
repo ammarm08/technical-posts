@@ -67,5 +67,22 @@ On a related note, Lisp has two primary equality functions: `eql` and `eq`. `eql
 
 ; example
 (compress '(1 1 1 0 1 0 0 0 0 1)) ; returns ((3 1) 0 1 (4 0) 1)
+
+(defun uncompress (lst)
+  (if (null lst)
+      nil
+      (let ((elt (car lst))
+        (if (consp elt)
+            (append (apply #'unroll elt) rest)
+            (cons elt rest)))))
+
+(defun unroll (n bit)
+  (if (zerop n)
+      nil
+      (cons bit (list-of (- n 1) bit)))
+
+
+; example
+(uncompress '((3 1) 0 1 (4 0) 1)) ; returns (1 1 1 0 1 0 0 0 0 1)
 ```
 
