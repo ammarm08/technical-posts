@@ -94,3 +94,66 @@ Finally, a `generate` function glues all the relevant rules together:
 We spend most of our time upfront defining our rules and writing the "language" for our grammar. Making changes to our grammar, then, is as simple as changing our list of rules.
 
 This is an example of data-driven programming. The data drives what the program does next.
+
+## Macros
+
+> The first step in writing a macro is to recognize that every time you write one, you are defining a new language that is just like
+> Lisp except for your new macro. The programmer who thinks that way will rightfully be extremely frugal in defining macros.
+
+Macros are a feature unique to Lisp in that they allow the programmar to create a language that expands at runtime. Imagine defining a `while` macro with the following syntax ...
+
+```lisp
+(while test body...)
+```
+
+... that expands to the form
+
+```lisp
+(loop (unless test (return nil)) body)
+```
+
+Attempt 1:
+
+```lisp
+(defmacro while (test &rest body)
+    "Repeat body while test is true."
+    (list* 'loop 
+            (list 'unless test 'return nil)) 
+            body))
+```
+
+This macro expands a `while` expression into an unevaluated list of form `(loop (unless <expanded test> (return nil)) <expanded body>))`
+
+But this is clunky notation due to having to pay careful attention to how we use our quotes. This is why Lisp has backtick notation. Back notation works the same as normal quotes, except it tells the interpreter/compiler that there may be incidents within the quoted expression that will be "escaped" (that is, evaluated).
+
+Attempt 2:
+
+```lisp
+(defmacro while (test &rest body)
+    "Repeat body while test is true."
+    (let ((code `(loop (unless test (return nil)) ,body)))
+        (subst test 'test (subst body 'body code))))
+```
+
+In this iteration, we bind a local variable `code` to an expression that informs the interpreter to not evaluate anything *except* for `body` (a comma within a back-quoted expression denotes something that should be expanded). Then `subst` replaces all instances of `test` with the quoted expression that follows.
+
+Still confusing (maybe even more confusing than example #1).
+
+Attempt 3:
+
+```lisp
+(defmacro while (test &rest body)
+    "Repeat body while test is true."
+   `(loop (unless ,test (return nil))
+           ,@body))
+```
+
+This is more concise and easier to follow. The back-quoted expression expands out `test` (comma), and splices in the expansion of `body` as a list (comma-@). Nice.
+
+General examples:
+
+```lisp
+(setf test1 '(a test)) ; (A TEST)
+`(this is ,test1) ; (THIS IS (A TEST))
+`(this is ,@test1) ; (THIS IS A TEST)
+```
