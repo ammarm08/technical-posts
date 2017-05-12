@@ -127,3 +127,38 @@ The shape of uncompression is a linear map. We iterate straight across the compr
 ; example
 (shortest-path 'a 'c '('(a b c) '(b c) '(c d)))  ; returns (A C)
 ```
+
+## Specialized Data Structures
+
+Common Lisp's type system does get a little complicated, but essentially all "list-type" data structures inherit from the Sequence type. This means they share some common characteristics, functions, parameters, etc. Then these specialized data structures layer in their own domain-specific access functions given their use cases. For example, arrays are useful for linear algebra and doing work on vectors/matrices.
+
+Arrays:
+
+```lisp
+
+; 2 x 3 matrix initialized to nil
+(setf m (make-array '(2 3) :initial-element nil))
+
+; 4-element vector initialized to nil
+(setf v (make-array 4 :initial-element nil))
+
+; anonymous vector
+#(0 1 2 3 4)
+```
+
+Whereas strings are useful for working with and manipulating human language.
+
+Strings:
+
+```lisp
+
+(sort "elbow" #'char<) ; "below"
+
+(aref "abc" 1) ; #\b
+
+(char "abc" 1) ; #\b
+
+(equal "fred "fred") ; T
+(equal "fred" "Fred") ; NIL
+(string-equal "fred" "Fred") ; T (ignores case)
+```
