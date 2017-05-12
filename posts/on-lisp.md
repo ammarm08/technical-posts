@@ -69,3 +69,49 @@ This is much better, but we at this point may realize that this procedure isn't 
 ```
 
 And now we can use the `find` function anywhere in our program, changing its implementation as we see fit. This entire process occurs incrementally, as our first efforts show us a solution's potential as a generalizable procedure.
+
+## Writing Macros
+
+> The definition of a macro is essentially a function that generates Lisp code -- a program that writes programs. From those small
+> beginnings arise great possibilities, and also unexpected hazards.
+
+How would we write a macro for `dolist` with the desired shape:
+
+```lisp
+(dolist (x '(a b c))
+  (print x))
+```
+
+That is, given each element `x` in a list `lst`, and a body `body`, how can we iterate across the list to execute a certain body of functions on each `x`? Of course we could try and just do a `(defun dolist ...)`. But what if the syntax rules of this new operation doesn't translate very cleanly to standard out-of-the-box Lisp? Macros let us define our *own* languages using our own syntax -- they take code as parameters, and based on the rules we provide them, inform the compiler/interpreter how to expand and substitute Lisp syntax at runtime/compile-time.
+
+```lisp
+(def macro dolist ((var list &optional result) &body body)
+  `(progn
+    (mapc #'(lambda (,var) ,@body) ,list)
+    (let ((,var nil))
+      ,result)))
+```
+
+The above macro takes as parameters a list `(var list &optional result)` and a `body`. It then returns an unevaluated `progn` function that maps across every element in the list, and for each element `var`, applying it to the entire `body`. 
+
+So here's the macro usage and macro-expansion:
+
+```lisp
+
+; macro usage
+(dolist x '(a b c)
+  (print x))
+  
+; macro expanded
+(progn
+  (mapc #'(lambda (x)
+    (print x)) '(a b c))
+  (let ((x nil))
+    nil)))
+```
+
+Things to note:
+
+1. The macro destructures the first argument into `(var list &optional result)`.
+2. The macro uses backtick notation to keep most things unsubstituted *except* for `var` + `list` (get subbed in) and `body` (gets spliced in)
+3. The macro uses `&body body`, which is basically saying (any arguments beyond this point, put them in a list and call taht list `body`). It's essentially the same as `&rest <some-name>`.
