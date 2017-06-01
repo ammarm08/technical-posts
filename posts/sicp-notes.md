@@ -45,28 +45,26 @@ Hiding in the footnotes:
 
 A *linearly recursive procedure* that calculates `b^n`:
 
-```js
-const expR = (b, n) => {
-  if (n === 0) return 1
-  else return b * expR(b, n - 1)
-}
+```clojure
+(defn exp-r [b n]
+  (if (zero? n)
+      1
+      (* b (exp-r b (dec n)))))
 ```
 
 A *tail recursive procedure* that does the same thing:
 
-```js
-const exp = (b, n) => {
-  const expTCO = (b, counter, product) => {
-    if (counter === 0) return product
-    else return expTCO(b, counter - 1, b * product)
-  }
-  
-  return expTCO(b, n, 1)
-}
+```clojure
+(defn exp
+  ([b n] (exp b n 1))
+  ([b n acc]
+      (if (zero? n)
+          acc
+          (recur b (dec n) (* b acc)))))
 ```
 
 In the former case, not only does the return value of each function call depend on what its recursive call returns, the process must
-also somehow maintain state about this growing stack of calls. Why? Because when a recursive call returns, it must then compute the "deferred operation" (`multiplying b * expR(b, n -1)`). This gets expensive because each recursive call thus needs to maintain knowledge of this in its stack frame. These stack frames build up as each recursive function call maintains its own stack frame.
+also somehow maintain state about this growing stack of calls. Why? Because when a recursive call returns, it must completing the operation that was "waiting" on it to return (`multiplying (* b (exp-r b (- n 1)))`). This gets expensive because each recursive call thus needs to maintain knowledge of this in its stack frame. These stack frames build up as each recursive function call maintains its own stack frame.
 
 In the latter case, the return value of a function is fully represented by the return value of the recursive call (which carries with it, presumably, any state transformations).
 
@@ -87,23 +85,22 @@ being applied to a pattern of other procedures.
 
 A cool example:
 
-```js
-const iter = (a, b, transform, reduce) => {
-  if (a >= b) return transform(a)
-  else return reduce(transform(a), iter(++a, b, transform, reduce))
-}
+```clojure
+(defn my-iter [a b transform reducer]
+  (if (>= a b)
+      (transform a)
+      (reducer
+        (transform a)
+        (my-iter (inc a) b transform reducer))))
 ```
 
-The above function is an iterator from some integer `a` to `b`. On each iteration, it applies a transform function of the programmer's choice to the current integer (let's say `i`), then applies a programmer-supplied reduce function to this transformed `i`, moving along until we reach the end of the range of integers.
+The above function is an iterator from some integer `a` to `b`. On each iteration, it applies a transform function of the programmer's choice to the current integer, then applies a programmer-supplied reduce function to this transformed integer, moving along until we reach the end of the range of integers.
 
 It can be used to define some `factorial` process:
 
-```js
-const factorial = x => {
-  const identity = x => x
-  const mult = (a, b) => a * b
-  return iter(1, x, identity, mult)
-}
+```clojure
+(defn factorial [n] 
+  (my-iter 1 n identity #'*))
 ```
 Iterate from 1 to `x`, multiplying by `identity(i)` as you go. `factorial(4) -> identity(1) * identity(2) * identity(3) * identity(4)`
 
@@ -171,49 +168,56 @@ A search can often be re-characterized as minimizing the interval of uncertainty
 
 Data abstractions become extremely useful constructs when we're managing the flow and access patterns of information we're dealing with. What if we wanted to implement a `Fraction` data type as a numerator-denominator pair? We could define the following procedure:
 
-```js
-const fraction = (numerator, denominator) => (dispatch) => dispatch(numerator, denominator)
+```clojure
+(defn fraction [numerator denominator]
+  (fn [z] (z numerator denominator)))
 ```
 
 This procedure takes a numerator and denominator, then returns a function. This returning function takes as an argument a dispatcher function (that a programmer can define) that will apply the numerator and denominator as its arguments.
 
 Now we have a procedure that has abstracted out the concept of a fraction. The numerator and denominator are simply variables bound by the `fraction` procedure. If we want to access the numerator, we could define a procedure such as:
 
-```js
-const getNumerator = (z) => z((n, d) => n)
+```clojure
+(defn get-numerator [frac]
+  (frac (fn [numerator denominator] numerator)))
 
-// const f = fraction(3, 4)
-// getNumerator(f) = 3
+(def f (fraction 3 4))
+(get-numerator f) ; 3
 ```
 
-The Fraction data type return a function that accepts a dispatcher which has access to the numerator and denominator as arguments. In `getNumerator`, the dispatcher simply returns the numerator (first arg).
+The Fraction data type return a function that accepts a dispatcher which has access to the numerator and denominator as arguments. In `get-numerator`, the dispatcher simply returns the numerator (first arg).
 
 Similarly, we can define a denominator dispatcher:
 
-```js
-const getDenominator = (z) => z((n, d) => d)
+```clojure
+(defn get-denominator [frac]
+  (frac (fn [numerator denominator] denominator)))
 
-// const f = fraction(3, 4)
-// getDenominator(f) = 4
+(def f (fraction 3 4))
+(get-denominator f) ; 4
 ```
 
 And now we could add more specific operations to further manipulate the Fraction data type.
 
-```js
-const addFractions = (a, b) => {
-  const num_a = getNumerator(a), denom_a = getDenominator(a)
-  const num_b = getNumerator(b), denom_b = getDenominator(b)
-  
-  const numerator = ( (num_a * denom_b) + (num_b * denom_a) )
-  const denominator = ( denom_a * denom_b )
-  
-  return fraction(numerator, denominator)
-}
+```clojure
+(defn add-fractions [x y]
+  (let [new-num (+ (* (get-numerator x) (get-denominator y)) 
+                   (* (get-numerator y) (get-denominator x)))
+        new-denom (* (get-denominator x) 
+                     (get-denominator y))]
+       (fraction new-num new-denom)))
 
-const printFraction = (fraction) => console.log(getNumerator(fraction) + '/' + getDenominator(fraction))
+(defn print-fraction [frac]
+  (println (format "%d/%d"
+                   (get-numerator frac)
+                   (get-denominator frac))))
+
+(def f (fraction 3 4))
+(def g (fraction 2 8))
+(print-fraction (add-fractions f g)) ; 32/32
 ```
 
-But say we invoke `fraction(6, 8)`. This fraction in its reduced form is `3 / 4`, but do we make that computation at construction time or at access time? That's up to the programmer to decide, depending on read/write ratio. If you anticipate writing fractions more often than reading them, then maybe reducing upfront is unnecessary. But if you're reading fractions a lot, you don't want to slow things down to constantly reduce the fraction on access, so in this case you may consider reducing the fraction at construction time.
+In the above example, the added fraction in its reduced form is `1` (because `32/32` reduces to 1), but do we make that computation at construction time or at access time? That's up to the programmer to decide, depending on read/write ratio. If you anticipate writing fractions more often than reading them, then maybe reducing upfront is unnecessary. But if you're reading fractions a lot, you don't want to slow things down to constantly reduce the fraction on access, so in this case you may consider reducing the fraction at construction time.
 
 As Abelman/Sussman say, all of this "further blurs the distinction between 'procedure' and 'data'."
 
@@ -221,47 +225,57 @@ As Abelman/Sussman say, all of this "further blurs the distinction between 'proc
 
 Working with Lisp reorders your thinking to work in binaries/pairs. Some extremely powerful procedures can be cooked up from the ground up.
 
-```js
+```clojure
 
-// construct a pair
-const cons = (x, y) => (dispatch) => dispatch(x, y)
+; construct a pair
+(defn my-cons [x y] 
+  (fn [m] (m x y)))
 
-// access first/last item in pair
-const car = (z) => z((x, y) => x)
-const cdr = (z) => z((x, y) => y)
+; access first/last item in pair
+(defn my-car [pair]
+  (pair (fn [x y] x)))
 
-// examples:
-let x = cons(1, 2)
-car(x) // 1
-cdr(y) // 2
+(defn my-cdr [pair]
+  (pair (fn [x y] y)))
 
-let y = cons(x, cons(3, 4))
-car(y) // cons(1, 2)
-cdr(y) // cons(3, 4)
-cdr(car(y)) // 2
-cdr(cdr(y)) // 4
+; examples:
+(def x (cons 1 2))
+(my-car x) ; 1
+(my-cdr x) ; 2
 
-// the List primitive constructs a pair of pair of pairs ... of arbitrary length
-const some_list = cons(1, cons(2, cons(3, null))) = list(1, 2, 3)
+(def y (my-cons x (my-cons 3 4))) ; (1 2 3 4)
 
-// append/concatenate two lists
-const append = (a, b) => null?(a) : b ? cons(car(a), append(cdr(a), b))
+; append/concatenate two lists
+(defn my-append [a b]
+  (if (empty? a)
+      b
+      (cons (first a) 
+            (my-append (rest a) b))))
 
-// list operations
-const nth = (list, n) => null?(list) ? null : (n == 0 ? car(list) : nth(cdr(list), n - 1))
-const len = (list) => null?(list) ? 0 : 1 + len(cdr(list))
-const includes = (list, x) => null?(list) ? false : (car(list) == x ? true : includes(cdr(list), x))
+; list operations
+(defn my-nth [lst n] 
+  (cond (empty? lst) nil 
+        (= n 0) (first lst) 
+        :else (recur (rest lst) (dec n))
+        ))
 
-// functional operations (yee haw)
-const map = (list, fn) => null?(list) ? null : cons(fn(car(list)), map(cdr(list), fn))
-const filter = (list, fn) => null?(list) ? null : (fn(car(list)) ? cons(car(list), filter(cdr(list), fn)) : filter(cdr(list), fn))
-const reduce = (list, fn, memo) => null?(list) ? memo : reduce(cdr(list), fn, fn(memo, car(list)))
+(defn my-len 
+  ([lst] (my-len lst 0))
+  ([lst n] 
+    (if (empty? lst)
+        n
+        (recur (rest lst) (inc n)))))
 
-// examples
-const xs = list(1, 2, 3, 4, 5)
-const odds = filter(xs, (x) => x % 2 != 0) // odds: cons(1, cons(3, cons(5, nil))) = list(1, 3, 5)
-const doubles = map(xs, (x) => x * 2) // doubles: cons(2, cons(4, ... you get the idea
-const sum = reduce(xs, (total, x) => total + x, 0) // sum: 1 + 2 + 3 + 4 + 5 = 15
+; functional operations
+(defn my-map [f lst]
+  (if (empty? lst)
+      nil
+      (cons (f (first lst)) (my-map f (rest lst)))))
+
+(defn my-filter [pred lst]
+  (cond (empty? lst) nil
+        (pred (first lst)) (cons (first lst) (my-filter pred (rest lst)))
+        :else (my-filter pred (rest lst))))
 ```
 
 This is thinking in "binary" hierarchies (a collection is a pair formed by one thing and a collection of another pair formed by one thing and a collection of another pair formed by ... etc).
